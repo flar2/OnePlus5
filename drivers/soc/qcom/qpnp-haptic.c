@@ -2266,22 +2266,22 @@ static int qpnp_hap_parse_dt(struct qpnp_hap *hap)
 	}
 
 	hap->vtg_min = QPNP_HAP_VMAX_MIN_MV;
-	rc = of_property_read_u32(spmi->dev.of_node,
+	rc = of_property_read_u32(pdev->dev.of_node,
 			"qcom,hap-vtg-min-mv", &temp);
 	if (!rc) {
 		hap->vtg_min = temp;
 	} else if (rc != -EINVAL) {
-		dev_err(&spmi->dev, "Unable to read vtg_min\n");
+		dev_err(&pdev->dev, "Unable to read vtg_min\n");
 		return rc;
 	}
 
 	hap->vtg_max = QPNP_HAP_VMAX_MAX_MV;
-	rc = of_property_read_u32(spmi->dev.of_node,
+	rc = of_property_read_u32(pdev->dev.of_node,
 			"qcom,hap-vtg-max-mv", &temp);
 	if (!rc) {
 		hap->vtg_max = temp;
 	} else if (rc != -EINVAL) {
-		dev_err(&spmi->dev, "Unable to read vtg_max\n");
+		dev_err(&pdev->dev, "Unable to read vtg_max\n");
 		return rc;
 	}
 
