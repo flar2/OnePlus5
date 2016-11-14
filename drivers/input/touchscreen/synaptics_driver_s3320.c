@@ -76,6 +76,8 @@ static int s2w_switch = 0;
 static int dt2w_switch = 0;
 #endif
 
+#include <linux/moduleparam.h>
+
 /*----------------------Global Define--------------------------------*/
 
 
@@ -192,7 +194,11 @@ int Mgestrue_gesture;/* M */
 int Sgestrue_gesture;/* S */
 static int gesture_switch;
 /*ruanbanmao@BSP add for tp gesture 2015-05-06 */
+
 #endif
+
+bool haptic_feedback_disable = false;
+module_param(haptic_feedback_disable, bool, 0644);
 
 bool s3320_stop_buttons;
 // module parameter
@@ -248,6 +254,7 @@ static struct workqueue_struct *synaptics_report;
 static struct workqueue_struct *get_base_report;
 static struct proc_dir_entry *prEntry_tp;
 
+void qpnp_hap_ignore_next_request(void);
 
 #ifdef SUPPORT_GESTURE
 static uint32_t clockwise;
@@ -1297,6 +1304,7 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 		(gesture == Left2RightSwip && s2w_switch & SWEEP_RIGHT) ||
 		(gesture == DouTap && dt2w_switch)) {
 
+
 		//wake gestures (requires app)
 		if (gestures_switch) {
 			int gest;
@@ -1355,6 +1363,10 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 		input_sync(ts->input_dev);
 		input_report_key(ts->input_dev, keyCode, 0);
 		input_sync(ts->input_dev);
+
+		if (haptic_feedback_disable)
+			qpnp_hap_ignore_next_request();
+
 	} else {
 		ret = i2c_smbus_read_i2c_block_data(ts->client,
 		F12_2D_CTRL20, 3, &(reportbuf[0x0]));
