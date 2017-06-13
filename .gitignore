@@ -94,6 +94,11 @@ GTAGS
 # id-utils files
 ID
 
+*.rej
+*.diff
+*.patch
+*.list
+out/*
 *.orig
 *~
 \#*#
