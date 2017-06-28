@@ -73,6 +73,8 @@ static int s2w_switch = 0;
 static int dt2w_switch = 0;
 #endif
 
+#include <linux/moduleparam.h>
+
 /*------------------------------------------------Global Define--------------------------------------------*/
 
 #define TP_UNKNOWN 0
@@ -189,9 +191,14 @@ int Down2UpSwip_gesture =0;//"down to up |"
 int Wgestrue_gesture =0;//"(W)"
 int Mgestrue_gesture =0;//"(M)"
 int Sgestrue_gesture =0;//"(S)"
+bool s3320_stop_buttons;
 static int gesture_switch = 0;
 //ruanbanmao@BSP add for tp gesture 2015-05-06, end
 #endif
+
+// module parameter
+bool no_buttons_during_touch = 1;
+module_param(no_buttons_during_touch, bool, 0644);
 
 /*********************for Debug LOG switch*******************/
 #define TPD_ERR(a, arg...)  pr_err(TPD_DEVICE ": " a, ##arg)
@@ -1517,6 +1524,7 @@ void int_touch(void)
 			input_mt_slot(ts->input_dev, i);
 			input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, finger_status);
 			input_report_key(ts->input_dev, BTN_TOOL_FINGER, 1);
+			s3320_stop_buttons = no_buttons_during_touch;
 			input_report_abs(ts->input_dev, ABS_MT_POSITION_X, points.x);
 			input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, points.y);
 			//#ifdef REPORT_2D_W
@@ -1565,6 +1573,8 @@ void int_touch(void)
 		if (3 == (++prlog_count % 6))
 			TPD_ERR("all finger up\n");
 		input_report_key(ts->input_dev, BTN_TOOL_FINGER, 0);
+		s3320_stop_buttons = false;
+
 #ifndef TYPE_B_PROTOCOL
 		input_mt_sync(ts->input_dev);
 #endif
@@ -1607,7 +1617,7 @@ static void int_key_report_s3508(struct synaptics_ts_data *ts)
 	button_key = synaptics_rmi4_i2c_read_byte(ts->client,F1A_0D_DATA00);
 	if (1 == (++log_count % 4))
 		TPD_ERR("touch_key[0x%x],touchkey_state[0x%x]\n",button_key,ts->pre_btn_state);
-	if((button_key & 0x01) && !(ts->pre_btn_state & 0x01) && !key_back_disable)//back
+	if((button_key & 0x01) && !(ts->pre_btn_state & 0x01) && !key_back_disable && !s3320_stop_buttons)//back
 	{
 		input_report_key(ts->input_dev, OEM_KEY_BACK, 1);
 		input_sync(ts->input_dev);
@@ -1616,7 +1626,7 @@ static void int_key_report_s3508(struct synaptics_ts_data *ts)
 		input_sync(ts->input_dev);
 	}
 
-	if((button_key & 0x02) && !(ts->pre_btn_state & 0x02) && !key_appselect_disable)//menu
+	if((button_key & 0x02) && !(ts->pre_btn_state & 0x02) && !key_appselect_disable && !s3320_stop_buttons)//menu
 	{
 		input_report_key(ts->input_dev, OEM_KEY_APPSELECT, 1);
 		input_sync(ts->input_dev);
