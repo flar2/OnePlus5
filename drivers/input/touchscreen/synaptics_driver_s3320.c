@@ -57,6 +57,8 @@
 #include <linux/project_info.h>
 #include "synaptics_baseline.h"
 
+#include <linux/moduleparam.h>
+
 /*------------------------------------------------Global Define--------------------------------------------*/
 
 #define TP_UNKNOWN 0
@@ -177,6 +179,12 @@ struct test_header {
 // Button key codes
 #define KEY_BUTTON_LEFT     KEY_BACK
 #define KEY_BUTTON_RIGHT    KEY_APPSELECT
+
+bool s3320_stop_buttons;
+
+// module parameter
+bool no_buttons_during_touch = 1;
+module_param(no_buttons_during_touch, bool, 0644);
 
 /*********************for Debug LOG switch*******************/
 #define TPD_ERR(a, arg...)  pr_err(TPD_DEVICE ": " a, ##arg)
@@ -1583,6 +1591,7 @@ void int_touch(void)
 			input_mt_slot(ts->input_dev, i);
 			input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, finger_status);
 			input_report_key(ts->input_dev, BTN_TOOL_FINGER, 1);
+			s3320_stop_buttons = no_buttons_during_touch;
 			input_report_abs(ts->input_dev, ABS_MT_POSITION_X, points.x);
 			input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, points.y);
 			//#ifdef REPORT_2D_W
@@ -1632,6 +1641,7 @@ void int_touch(void)
 
 	if (finger_num == 0/* && last_status && (check_key <= 1)*/) {
 		input_report_key(ts->input_dev, BTN_TOOL_FINGER, 0);
+		s3320_stop_buttons = false;
 #ifndef TYPE_B_PROTOCOL
 		input_mt_sync(ts->input_dev);
 #endif
@@ -1687,7 +1697,7 @@ static void int_key_report_s3508(struct synaptics_ts_data *ts)
 	}
 
 	if (!ts->key_disable) {
-		if ((button_key & BUTTON_LEFT) && !(ts->pre_btn_state & BUTTON_LEFT)) {
+		if ((button_key & BUTTON_LEFT) && !(ts->pre_btn_state & BUTTON_LEFT) && !s3320_stop_buttons) {
 			input_report_key(ts->input_dev, keycode_left, 1);
 			input_sync(ts->input_dev);
 		} else if (!(button_key & BUTTON_LEFT) && (ts->pre_btn_state & BUTTON_LEFT)) {
@@ -1695,7 +1705,7 @@ static void int_key_report_s3508(struct synaptics_ts_data *ts)
 			input_sync(ts->input_dev);
 		}
 
-		if ((button_key & BUTTON_RIGHT) && !(ts->pre_btn_state & BUTTON_RIGHT)) {
+		if ((button_key & BUTTON_RIGHT) && !(ts->pre_btn_state & BUTTON_RIGHT) && !s3320_stop_buttons) {
 			input_report_key(ts->input_dev, keycode_right, 1);
 			input_sync(ts->input_dev);
 		} else if (!(button_key & BUTTON_RIGHT) && (ts->pre_btn_state & BUTTON_RIGHT)) {
