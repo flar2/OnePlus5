@@ -58,6 +58,8 @@
 #include <linux/project_info.h>
 #include "synaptics_baseline.h"
 
+#include <linux/moduleparam.h>
+
 #define WAKE_GESTURES 		1
 #ifdef WAKE_GESTURES
 #define WAKE_GESTURE		0x0b
@@ -189,6 +191,11 @@ int Mgestrue_gesture;/* M */
 int Sgestrue_gesture;/* S */
 static int gesture_switch;
 #endif
+
+bool s3320_stop_buttons;
+// module parameter
+bool no_buttons_during_touch = 1;
+module_param(no_buttons_during_touch, bool, 0644);
 
 /*********************for Debug LOG switch*******************/
 #define TPD_ERR(a, arg...)  pr_err(TPD_DEVICE ": " a, ##arg)
@@ -1517,6 +1524,7 @@ void int_touch(void)
 			MT_TOOL_FINGER, finger_status);
 			input_report_key(ts->input_dev,
 			BTN_TOOL_FINGER, 1);
+			s3320_stop_buttons = no_buttons_during_touch;
 			input_report_abs(ts->input_dev,
 			ABS_MT_POSITION_X, points.x);
 			input_report_abs(ts->input_dev,
@@ -1562,6 +1570,8 @@ void int_touch(void)
 		if (3 == (++prlog_count % 6))
 			TPD_ERR("all finger up\n");
 		input_report_key(ts->input_dev, BTN_TOOL_FINGER, 0);
+		s3320_stop_buttons = false;
+
 #ifndef TYPE_B_PROTOCOL
 		input_mt_sync(ts->input_dev);
 #endif
@@ -1609,7 +1619,7 @@ static void int_key_report_s3508(struct synaptics_ts_data *ts)
 		TPD_ERR("touch_key[0x%x],touchkey_state[0x%x]\n",
 		button_key, ts->pre_btn_state);
 	if ((button_key & 0x01) && !(ts->pre_btn_state & 0x01)
-	&& !key_back_disable) {
+	&& !key_back_disable && !s3320_stop_buttons) {
 		input_report_key(ts->input_dev, OEM_KEY_BACK, 1);
 		input_sync(ts->input_dev);
 	} else if (!(button_key & 0x01) && (ts->pre_btn_state & 0x01)
@@ -1619,7 +1629,7 @@ static void int_key_report_s3508(struct synaptics_ts_data *ts)
 	}
 
 	if ((button_key & 0x02) && !(ts->pre_btn_state & 0x02)
-	&& !key_appselect_disable) {
+	&& !key_appselect_disable && !s3320_stop_buttons) {
 		input_report_key(ts->input_dev, OEM_KEY_APPSELECT, 1);
 		input_sync(ts->input_dev);
 	} else if (!(button_key & 0x02) && (ts->pre_btn_state & 0x02)
