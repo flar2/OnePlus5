@@ -197,7 +197,7 @@ static int gesture_switch = 0;
 #endif
 
 // module parameter
-bool no_buttons_during_touch = 1;
+bool no_buttons_during_touch = 0;
 module_param(no_buttons_during_touch, bool, 0644);
 
 /*********************for Debug LOG switch*******************/
