@@ -73,6 +73,8 @@ static int s2w_switch = 0;
 static int dt2w_switch = 0;
 #endif
 
+#include <linux/moduleparam.h>
+
 /*------------------------------------------------Global Define--------------------------------------------*/
 
 #define TP_UNKNOWN 0
@@ -193,6 +195,10 @@ bool s3320_stop_buttons;
 static int gesture_switch = 0;
 //ruanbanmao@BSP add for tp gesture 2015-05-06, end
 #endif
+
+// module parameter
+bool no_buttons_during_touch = 1;
+module_param(no_buttons_during_touch, bool, 0644);
 
 /*********************for Debug LOG switch*******************/
 #define TPD_ERR(a, arg...)  pr_err(TPD_DEVICE ": " a, ##arg)
@@ -1518,7 +1524,7 @@ void int_touch(void)
 			input_mt_slot(ts->input_dev, i);
 			input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, finger_status);
 			input_report_key(ts->input_dev, BTN_TOOL_FINGER, 1);
-			s3320_stop_buttons = true;
+			s3320_stop_buttons = no_buttons_during_touch;
 			input_report_abs(ts->input_dev, ABS_MT_POSITION_X, points.x);
 			input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, points.y);
 			//#ifdef REPORT_2D_W
