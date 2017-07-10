@@ -43,6 +43,8 @@ static struct mdss_dsi_data *mdss_dsi_res;
 #define DSI_DISABLE_PC_LATENCY 100
 #define DSI_ENABLE_PC_LATENCY PM_QOS_DEFAULT_VALUE
 
+extern bool s3320_stop_buttons;
+
 static struct pm_qos_request mdss_dsi_pm_qos_request;
 
 void mdss_dump_dsi_debug_bus(u32 bus_dump_flag,
@@ -2713,6 +2715,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		break;
 	case MDSS_EVENT_POST_PANEL_ON:
 		rc = mdss_dsi_post_panel_on(pdata);
+		s3320_stop_buttons = false;	// AP: when display gets activated, ensure buttons are enabled too
 		break;
 	case MDSS_EVENT_PANEL_ON:
 		ctrl_pdata->ctrl_state |= CTRL_STATE_MDP_ACTIVE;
