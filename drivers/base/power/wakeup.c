@@ -33,6 +33,10 @@ static bool enable_wlan_ws = true;
 module_param(enable_wlan_ws, bool, 0644);
 static bool enable_timerfd_ws = true;
 module_param(enable_timerfd_ws, bool, 0644);
+static bool enable_wlan_ipa_ws = true;
+module_param(enable_wlan_ipa_ws, bool, 0644);
+static bool enable_wlan_pno_wl_ws = true;
+module_param(enable_wlan_pno_wl_ws, bool, 0644);
 
 /*
  * If set, the suspend/hibernate code will abort transitions to a sleep state
@@ -581,6 +585,10 @@ static bool wakeup_source_blocker(struct wakeup_source *ws)
 	                        !strncmp(ws->name, "wlan_wow_wl", wslen)) ||
 			(!enable_wlan_ws &&
 				!strncmp(ws->name, "wlan", wslen)) ||
+			(!enable_wlan_ipa_ws &&
+				!strncmp(ws->name, "wlan_ipa", wslen)) ||
+			(!enable_wlan_pno_wl_ws &&
+				!strncmp(ws->name, "wlan_pno_wl", wslen)) ||
 			(!enable_timerfd_ws &&
 				!strncmp(ws->name, "[timerfd]", wslen))) {
 			if (ws->active) {
