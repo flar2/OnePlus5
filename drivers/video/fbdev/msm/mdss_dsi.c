@@ -2712,16 +2712,17 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 	case MDSS_EVENT_UNBLANK:
 		if (ctrl_pdata->on_cmds.link_state == DSI_LP_MODE)
 			rc = mdss_dsi_unblank(pdata);
+		s3320_stop_buttons = false;	// AP: when display gets activated, ensure buttons are enabled too
 		break;
 	case MDSS_EVENT_POST_PANEL_ON:
 		rc = mdss_dsi_post_panel_on(pdata);
-		s3320_stop_buttons = false;	// AP: when display gets activated, ensure buttons are enabled too
 		break;
 	case MDSS_EVENT_PANEL_ON:
 		ctrl_pdata->ctrl_state |= CTRL_STATE_MDP_ACTIVE;
 		if (ctrl_pdata->on_cmds.link_state == DSI_HS_MODE)
 			rc = mdss_dsi_unblank(pdata);
 		pdata->panel_info.esd_rdy = true;
+		s3320_stop_buttons = false;	// AP: when display gets activated, ensure buttons are enabled too
 		break;
 	case MDSS_EVENT_BLANK:
 		power_state = (int) (unsigned long) arg;
