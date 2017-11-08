@@ -34,9 +34,19 @@
 #include "../pinconf.h"
 #include "pinctrl-msm.h"
 #include "../pinctrl-utils.h"
+#ifdef CONFIG_VENDOR_ONEPLUS
+#include <linux/wakeup_reason.h>
+#include <linux/cpufreq.h>
+#include <linux/suspend.h>
+#endif
 
 #define MAX_NR_GPIO 300
 #define PS_HOLD_OFFSET 0x820
+
+#ifdef CONFIG_VENDOR_ONEPLUS
+bool need_show_pinctrl_irq;
+bool fp_irq_cnt;
+#endif
 
 /**
  * struct msm_pinctrl - state for a pinctrl-msm device
@@ -440,6 +450,23 @@ static int msm_gpio_get(struct gpio_chip *chip, unsigned offset)
 	return !!(val & BIT(g->in_bit));
 }
 
+#ifdef CONFIG_VENDOR_ONEPLUS
+static int msm_gpio_get_dash(struct gpio_chip *chip, unsigned offset)
+{
+	const struct msm_pingroup *g;
+	struct msm_pinctrl *pctrl = container_of(chip,
+		struct msm_pinctrl, chip);
+	u32 val;
+
+	/*pr_err("%s enter\n", __func__);*/
+	g = &pctrl->soc->groups[offset];
+
+	val = readl_dash(pctrl->regs + g->io_reg);
+	/*pr_err("pctrl->regs + g->io_reg=%p,g->in_bit=%d\n",pctrl->regs + g->io_reg,g->in_bit);*/
+	return !!(val & BIT(g->in_bit));
+}
+#endif
+
 static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
 {
 	const struct msm_pingroup *g;
@@ -460,6 +487,29 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
 
 	spin_unlock_irqrestore(&pctrl->lock, flags);
 }
+
+#ifdef CONFIG_VENDOR_ONEPLUS
+static void msm_gpio_set_dash(struct gpio_chip *chip,
+			unsigned offset, int value)
+{
+	const struct msm_pingroup *g;
+	struct msm_pinctrl *pctrl = container_of(chip,
+						struct msm_pinctrl, chip);
+	u32 val;
+
+	/*pr_err("%s enter\n", __func__);*/
+	g = &pctrl->soc->groups[offset];
+
+	/*spin_lock_irqsave(&pctrl->lock, flags);*/
+	if (value)
+		val = BIT(g->out_bit);
+	else
+		val = ~BIT(g->out_bit);
+	writel_dash(val, pctrl->regs + g->io_reg);
+
+	/*spin_unlock_irqrestore(&pctrl->lock, flags);*/
+}
+#endif
 
 #ifdef CONFIG_DEBUG_FS
 #include <linux/seq_file.h>
@@ -517,7 +567,13 @@ static struct gpio_chip msm_gpio_template = {
 	.direction_input  = msm_gpio_direction_input,
 	.direction_output = msm_gpio_direction_output,
 	.get              = msm_gpio_get,
+#ifdef CONFIG_VENDOR_ONEPLUS
+	.get_dash	  = msm_gpio_get_dash,
+#endif
 	.set              = msm_gpio_set,
+#ifdef CONFIG_VENDOR_ONEPLUS
+	.set_dash	  = msm_gpio_set_dash,
+#endif
 	.request          = gpiochip_generic_request,
 	.free             = gpiochip_generic_free,
 	.dbg_show         = msm_gpio_dbg_show,
@@ -790,6 +846,19 @@ static void msm_gpio_irq_handler(struct irq_desc *desc)
 			irq_pin = irq_find_mapping(gc->irqdomain, i);
 			generic_handle_irq(irq_pin);
 			handled++;
+#ifdef CONFIG_VENDOR_ONEPLUS
+			if (!!need_show_pinctrl_irq) {
+				need_show_pinctrl_irq = false;
+
+				if (strstr(irq_to_desc(irq_pin)->action->name, "soc:fpc_fpc1020") != NULL) { //it is fpc irq
+					fp_irq_cnt = true;
+					c0_cpufreq_limit_queue();
+				}
+
+				//printk(KERN_ERR "hwirq %s [irq_num=%d ]triggered\n",irq_to_desc(irq_pin)->action->name,irq_pin);
+				log_wakeup_reason(irq_pin);
+			}
+#endif
 		}
 	}
 
@@ -899,6 +968,28 @@ static void msm_pinctrl_setup_pm_reset(struct msm_pinctrl *pctrl)
 		}
 }
 
+#ifdef CONFIG_VENDOR_ONEPLUS
+static int pm_pm_event(struct notifier_block *notifier,
+		unsigned long pm_event, void *unused)
+{
+	switch (pm_event) {
+	case PM_SUSPEND_PREPARE:
+                //do nothing
+		break;
+	case PM_POST_SUSPEND:
+		need_show_pinctrl_irq = false;
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
+
+static struct notifier_block pinctrl_pm_notifier_block = {
+	.notifier_call = pm_pm_event,
+};
+#endif
+
 #ifdef CONFIG_PM
 static int msm_pinctrl_suspend(void)
 {
@@ -951,6 +1042,13 @@ int msm_pinctrl_probe(struct platform_device *pdev,
 	struct msm_pinctrl *pctrl;
 	struct resource *res;
 	int ret;
+
+#ifdef CONFIG_VENDOR_ONEPLUS
+	ret = register_pm_notifier(&pinctrl_pm_notifier_block);
+	if (ret)
+		printk(KERN_WARNING "[%s] failed to register PM notifier %d\n",
+				__func__, ret);
+#endif
 
 	msm_pinctrl_data = pctrl = devm_kzalloc(&pdev->dev,
 				sizeof(*pctrl), GFP_KERNEL);
@@ -1007,6 +1105,10 @@ int msm_pinctrl_remove(struct platform_device *pdev)
 
 	gpiochip_remove(&pctrl->chip);
 	pinctrl_unregister(pctrl->pctrl);
+
+#ifdef CONFIG_VENDOR_ONEPLUS
+	unregister_pm_notifier(&pinctrl_pm_notifier_block);
+#endif
 
 	unregister_restart_handler(&pctrl->restart_nb);
 	unregister_syscore_ops(&msm_pinctrl_pm_ops);
