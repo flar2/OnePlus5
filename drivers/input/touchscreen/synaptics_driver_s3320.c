@@ -1837,7 +1837,7 @@ const char __user *buffer, size_t count, loff_t *ppos)
 	} else {
 		ts->gesture_enable = 0;
 	}
-
+#endif
 	return count;
 }
 static ssize_t coordinate_proc_read_func(struct file *file,
@@ -1932,7 +1932,7 @@ static const struct file_operations coordinate_proc_fops = {
 	.open = simple_open,
 	.owner = THIS_MODULE,
 };
-#endif
+
 static int page, address, block;
 static ssize_t synap_read_address(struct file *file, char __user *user_buf,
 size_t count, loff_t *ppos)
