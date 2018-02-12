@@ -4761,45 +4761,6 @@ err_pinctrl_get:
 	return retval;
 }
 
-#ifdef WAKE_GESTURES
-	gesture_dev = input_allocate_device();
-	if (!gesture_dev) {
-		pr_err("Can't allocate gesture device\n");
-		goto exit_init_failed;
-	}
-
-	gesture_dev->name = "wake_gesture";
-	gesture_dev->phys = "wake_gesture/input0";
-	input_set_capability(gesture_dev, EV_REL, WAKE_GESTURE);
-
-	ret = input_register_device(gesture_dev);
-	if (ret) {
-		pr_err("%s: input_register_device err=%d\n", __func__, ret);
-		goto err_gesture_dev;
-	}
-
-	android_touch_kobj = kobject_create_and_add("android_touch", NULL) ;
-	if (android_touch_kobj == NULL) {
-		pr_warn("%s: android_touch_kobj create_and_add failed\n", __func__);
-	}
-	ret = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake.attr);
-	if (ret) {
-		pr_warn("%s: sysfs_create_file failed for sweep2wake\n", __func__);
-	}
-	ret = sysfs_create_file(android_touch_kobj, &dev_attr_doubletap2wake.attr);
-	if (ret) {
-		pr_warn("%s: sysfs_create_file failed for doubletap2wake\n", __func__);
-	}
-	ret = sysfs_create_file(android_touch_kobj, &dev_attr_wake_gestures.attr);
-	if (ret) {
-		pr_warn("%s: sysfs_create_file failed for wake_gestures\n", __func__);
-	}
-	ret = sysfs_create_file(android_touch_kobj, &dev_attr_vib_strength.attr);
-	if (ret) {
-		pr_warn("%s: sysfs_create_file failed for vib_strength\n", __func__);
-	}
-#endif
-
 #ifdef SUPPORT_VIRTUAL_KEY
 #define VK_KEY_X    180
 #define VK_CENTER_Y 2020
@@ -5089,6 +5050,45 @@ static int synaptics_ts_probe(struct i2c_client *client,
 		premote_data->enable_remote = &(ts->enable_remote);
 		register_remote_device(premote_data);
 
+	}
+#endif
+
+#ifdef WAKE_GESTURES
+	gesture_dev = input_allocate_device();
+	if (!gesture_dev) {
+		pr_err("Can't allocate gesture device\n");
+		goto exit_init_failed;
+	}
+
+	gesture_dev->name = "wake_gesture";
+	gesture_dev->phys = "wake_gesture/input0";
+	input_set_capability(gesture_dev, EV_REL, WAKE_GESTURE);
+
+	ret = input_register_device(gesture_dev);
+	if (ret) {
+		pr_err("%s: input_register_device err=%d\n", __func__, ret);
+		goto err_gesture_dev;
+	}
+
+	android_touch_kobj = kobject_create_and_add("android_touch", NULL) ;
+	if (android_touch_kobj == NULL) {
+		pr_warn("%s: android_touch_kobj create_and_add failed\n", __func__);
+	}
+	ret = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake.attr);
+	if (ret) {
+		pr_warn("%s: sysfs_create_file failed for sweep2wake\n", __func__);
+	}
+	ret = sysfs_create_file(android_touch_kobj, &dev_attr_doubletap2wake.attr);
+	if (ret) {
+		pr_warn("%s: sysfs_create_file failed for doubletap2wake\n", __func__);
+	}
+	ret = sysfs_create_file(android_touch_kobj, &dev_attr_wake_gestures.attr);
+	if (ret) {
+		pr_warn("%s: sysfs_create_file failed for wake_gestures\n", __func__);
+	}
+	ret = sysfs_create_file(android_touch_kobj, &dev_attr_vib_strength.attr);
+	if (ret) {
+		pr_warn("%s: sysfs_create_file failed for vib_strength\n", __func__);
 	}
 #endif
 	init_synaptics_proc(ts);
