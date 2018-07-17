@@ -4062,12 +4062,9 @@ static void smblib_handle_apsd_done(struct smb_charger *chg, bool rising)
 		current_limit_ua = DEFAULT_CDP_MA*1000;
 	else if ((apsd_result->bit) == DCP_CHARGER_BIT)
 		current_limit_ua = DEFAULT_DCP_MA*1000;
-	else if ((apsd_result->bit) == FLOAT_CHARGER_BIT) {
-		if (chg->usb_type_redet_done)
-			current_limit_ua = DEFAULT_DCP_MA*1000;
-		else
-			current_limit_ua = DEFAULT_SDP_MA*1000;
-	} else if ((apsd_result->bit) == OCP_CHARGER_BIT)
+	else if ((apsd_result->bit) == FLOAT_CHARGER_BIT)
+		current_limit_ua = DEFAULT_DCP_MA*1000;
+	else if ((apsd_result->bit) == OCP_CHARGER_BIT)
 		current_limit_ua = DEFAULT_DCP_MA*1000;
 
 	if (chg->is_aging_test)
@@ -4086,7 +4083,8 @@ static void smblib_handle_apsd_done(struct smb_charger *chg, bool rising)
 	pr_info("apsd done,current_now=%d\n",
 		(get_prop_batt_current_now(chg) / 1000));
 	if (apsd_result->bit == DCP_CHARGER_BIT
-		|| apsd_result->bit == OCP_CHARGER_BIT) {
+		|| apsd_result->bit == OCP_CHARGER_BIT
+		|| apsd_result->bit == FLOAT_CHARGER_BIT) {
 		schedule_delayed_work(&chg->check_switch_dash_work,
 					msecs_to_jiffies(500));
 	} else {
@@ -5258,8 +5256,7 @@ static void op_check_allow_switch_dash_work(struct work_struct *work)
 
 	apsd_result = smblib_get_apsd_result(chg);
 	if (((apsd_result->bit != SDP_CHARGER_BIT
-		&& apsd_result->bit != CDP_CHARGER_BIT
-		&& apsd_result->bit != FLOAT_CHARGER_BIT)
+		&& apsd_result->bit != CDP_CHARGER_BIT)
 		&& apsd_result->bit)
 		|| chg->non_std_chg_present)
 		switch_fast_chg(chg);
@@ -6112,12 +6109,13 @@ static int usb_enum_check(const char *val, struct kernel_param *kp)
 		return 0;
 	/* if not SDP, return */
 	apsd_result = smblib_get_apsd_result(chg);
-	if (apsd_result->bit != SDP_CHARGER_BIT)
+	if (apsd_result->bit != SDP_CHARGER_BIT
+		&& apsd_result->bit != CDP_CHARGER_BIT)
 		return 0;
 
 	pr_info("usb don't enum for longtime in boot\n");
 	op_handle_usb_removal(chg);
-	chg->non_stand_chg_count = 0;
+	chg->re_trigr_dash_done = true;
 	schedule_delayed_work(
 		&chg->non_standard_charger_check_work,
 		msecs_to_jiffies(TIME_1000MS));
