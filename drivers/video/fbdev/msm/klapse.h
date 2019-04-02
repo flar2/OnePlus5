@@ -2,7 +2,7 @@
 #define _LINUX_KLAPSE_H
 
 /* KLAPSE_MDSS : Use 1 if using with MDSS */
-#define KLAPSE_MDSS 0
+#define KLAPSE_MDSS 1
 
 /* set_rgb_slider : Interface function for brightness-mode */
 extern void set_rgb_slider(u32 bl_lvl);
@@ -17,6 +17,7 @@ extern void set_rgb_slider(u32 bl_lvl);
  #define K_GREEN  kcal_get_color(1)
  #define K_BLUE   kcal_get_color(2)
 
+ extern void klapse_kcal_push(int r, int g, int b);
  extern K_TYPE kcal_get_color(unsigned short int code);
 #else
  #define K_RED    kcal_red
