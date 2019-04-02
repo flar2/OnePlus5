@@ -124,7 +124,9 @@ static int get_minutes_before_stop(void)
 
 static void set_rgb(int r, int g, int b)
 {
-    kcal_ext_apply_values(r, g, b);
+    K_RED = r;
+    K_GREEN = g;
+    K_BLUE = b;
     
     current_r = r;
     current_g = g;
