@@ -3245,6 +3245,8 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 	if (of_property_read_bool(node, "qcom,disable-dev-mode-pm"))
 		pm_runtime_get_noresume(mdwc->dev);
 
+	mutex_init(&mdwc->suspend_resume_mutex);
+
 	ret = dwc3_msm_extcon_register(mdwc);
 	if (ret)
 		goto put_dwc3;
@@ -3265,7 +3267,6 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 			POWER_SUPPLY_PROP_PRESENT, &pval);
 	}
 
-	mutex_init(&mdwc->suspend_resume_mutex);
 	/* Update initial VBUS/ID state from extcon */
 	if (mdwc->extcon_vbus && extcon_get_cable_state_(mdwc->extcon_vbus,
 							EXTCON_USB))
@@ -3981,7 +3982,12 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 				mdwc->otg_state = OTG_STATE_A_IDLE;
 				goto ret;
 			}
-			pm_wakeup_event(mdwc->dev, DWC3_WAKEUP_SRC_TIMEOUT);
+			/* add to fix OTG still can enter lpm mode issue */
+		/* pm_wakeup_event(mdwc->dev, DWC3_WAKEUP_SRC_TIMEOUT); */
+			if (mdwc->no_wakeup_src_in_hostmode) {
+				pm_wakeup_event(mdwc->dev,
+				DWC3_WAKEUP_SRC_TIMEOUT);
+			}
 		}
 		break;
 
@@ -3999,7 +4005,12 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 			dbg_event(0xFF, "XHCIResume", 0);
 			if (dwc)
 				pm_runtime_resume(&dwc->xhci->dev);
-			pm_wakeup_event(mdwc->dev, DWC3_WAKEUP_SRC_TIMEOUT);
+			/* add to fix OTG still can enter lpm mode issue */
+		/* pm_wakeup_event(mdwc->dev, DWC3_WAKEUP_SRC_TIMEOUT); */
+			if (mdwc->no_wakeup_src_in_hostmode) {
+				pm_wakeup_event(mdwc->dev,
+				DWC3_WAKEUP_SRC_TIMEOUT);
+			}
 		}
 		break;
 
