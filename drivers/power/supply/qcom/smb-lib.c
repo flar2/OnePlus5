@@ -7579,3 +7579,4 @@ int smblib_deinit(struct smb_charger *chg)
 	notify_dash_unplug_unregister(&notify_unplug_event);
 	return 0;
 }
+

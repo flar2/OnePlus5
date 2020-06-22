@@ -89,6 +89,7 @@ static void switch_dev_work(struct work_struct *work)
 	key[0] = gpio_get_value(switch_data->key1_gpio);
 	key[1] = gpio_get_value(switch_data->key2_gpio);
 	key[2] = gpio_get_value(switch_data->key3_gpio);
+
 	pr_err("key[0]=%d,key[1]=%d,key[2]=%d\n",
 			 key[0], key[1], key[2]);
 

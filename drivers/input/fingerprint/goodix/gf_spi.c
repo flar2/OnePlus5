@@ -638,7 +638,6 @@ static int goodix_fb_state_chg_callback(struct notifier_block *nb,
 		case FB_BLANK_UNBLANK:
 			if (gf_dev->device_available == 1) {
 				gf_dev->fb_black = 0;
-				
 #if defined(GF_NETLINK_ENABLE)
 				temp = GF_NET_EVENT_FB_UNBLACK;
 				sendnlmsg(&temp);

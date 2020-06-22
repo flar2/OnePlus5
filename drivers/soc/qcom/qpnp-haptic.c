@@ -2113,6 +2113,7 @@ static int qpnp_hap_config(struct qpnp_hap *hap)
 	rc = qpnp_hap_read_reg(hap, &reg, QPNP_HAP_PLAY_REG(hap->base));
 	if (rc < 0)
 		return rc;
+
 	hap->reg_play = reg;
 
 	if (hap->play_mode == QPNP_HAP_BUFFER)
