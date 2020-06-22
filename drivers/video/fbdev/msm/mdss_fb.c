@@ -952,7 +952,6 @@ static ssize_t mdss_fb_set_srgb_mode(struct device *dev,
 static DEVICE_ATTR(SRGB, S_IRUGO | S_IWUSR,
 	mdss_fb_get_srgb_mode, mdss_fb_set_srgb_mode);
 
-<<<<<<< HEAD
 static ssize_t mdss_fb_get_hbm_mode(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -992,8 +991,6 @@ static ssize_t mdss_fb_set_hbm_mode(struct device *dev,
 
 static DEVICE_ATTR(hbm, S_IRUGO | S_IWUSR,
 mdss_fb_get_hbm_mode, mdss_fb_set_hbm_mode);
-=======
->>>>>>> OnePlus/oneplus/QC8998_Q_10.0
 
 static ssize_t mdss_fb_get_adobe_rgb_mode(struct device *dev,
 		struct device_attribute *attr, char *buf)
